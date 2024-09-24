@@ -6,30 +6,25 @@ dotenv.config();
 
 const router = express.Router();
 
-// GET route for testing server connection
-router.route('/').get((req, res) => {
-    res.send("Hello From Server");
-});
-
 // POST route for generating an image from text
 router.route('/').post(async (req, res) => {
     try {
         const { prompt } = req.body;
 
-        // Make a POST request to the Hugging Face API using axios
         const aiResponse = await axios.post(
-            'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev',  // Replace with your actual Hugging Face model ID
+            'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev',
             { inputs: prompt },
             {
                 headers: {
-                    Authorization: `Bearer ${process.env.HUGGING_FACE_API_KEY}`,  // Ensure this key is in your .env
+                    Authorization: `Bearer ${process.env.HUGGING_FACE_API_KEY}`,
                 },
-                responseType: 'json',  // Expecting a JSON response from the API
+                responseType: 'arraybuffer',  // Change to receive binary data
             }
         );
 
-        // Extract the image from the response
-        const image = aiResponse.data;  // Adjust based on the exact response format from your model
+        // Convert the binary data to a base64 string
+        const imageBuffer = Buffer.from(aiResponse.data, 'binary').toString('base64');
+        const image = `data:image/jpeg;base64,${imageBuffer}`; // Adjust MIME type if necessary
 
         res.status(200).json({ photo: image });
     } catch (err) {
